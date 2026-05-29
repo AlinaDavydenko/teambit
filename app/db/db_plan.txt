@@ -1,0 +1,78 @@
+План базы данных 
+
+# Профиль пользователя (аккаунт) 
+
+U users:
+user_id UNIQUE
+first_name 
+last_name
+nikname UNIQUE 
+email 
+password 
+photo
+description 
+registration_date  
+
+# Доска - как по мне, она выглядит так, что есть табличка и на ней можно создавать карточки 
+# Доска одна на всю команду, но пользователь может создавать доски и набирать свою команду
+
+B boards: 
+board_id 
+name 
+color F7F2FC or F5EEDF
+user_id
+creation date 
+
+# Связующая таблица между board доской и users пользователями 
+BM board_members:
+board_id 
+user_id
+role: owner или member 
+
+# Колонки (на них расположены карточки или просто текст)
+
+C columns 
+column_id 
+name    
+board_id
+position
+
+# Карточки 
+
+C cards 
+id 
+name (заголовок с названием)
+color 
+tast_description 
+column_id
+position 
+priority INTEGER 
+tags
+deadline 
+Flag: is_template - для шаблонных карточек 
+
+# Участники карточки 
+
+CM card_members:
+id 
+user_id (members)
+card_id
+role: executors / customer
+
+# Комментарии внутри карточек - заметки внутри карточки, привязаны к карточке и пользователю
+С comments:
+id 
+user_id
+card_id
+content (комментарии) 
+created_at  
+
+# Сообщения 
+
+M messages:
+id 
+board_id 
+user_id 
+content (ai and users messages)
+is_ai BOOL (True / False) 
+created_at
