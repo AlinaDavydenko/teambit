@@ -7,7 +7,6 @@ from sqlalchemy import (
     String,
     DateTime,
     Text,
-    LargeBinary,
     ForeignKey,
     BOOLEAN,
 )
@@ -26,7 +25,7 @@ class User(Base):
     password = Column(String, nullable=False)
     photo = Column(String(255))
     description = Column(Text)
-    created_at = Column(DateTime,  default=datetime.datetime.now(datetime.timezone.utc))
+    created_at = Column(DateTime, default=datetime.datetime.now(datetime.timezone.utc))
 
 
 class Board(Base):
