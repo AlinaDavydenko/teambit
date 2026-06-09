@@ -66,12 +66,3 @@ def login(userdata: UserLogin, db: Session = Depends(get_db)):
     jwt_token = create_access_token({"user_id": user.user_id})
 
     return jwt_token
-
-
-# 2. POST /auth/login — логин:
-
-# Получить данные (UserLogin)
-# Найти пользователя по email — если не найден вернуть HTTPException(401)
-# Проверить пароль через verify_password — если не совпадает вернуть HTTPException(401)
-# Создать JWT токен через create_access_token
-# Вернуть токен
