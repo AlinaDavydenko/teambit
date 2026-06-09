@@ -20,11 +20,12 @@ class User(Base):
     user_id = Column(Integer, primary_key=True, autoincrement=True)
     first_name = Column(String(50), nullable=False)
     last_name = Column(String(100), nullable=False)
-    nikname = Column(String(20), nullable=False, unique=True)
+    nickname = Column(String(20), nullable=False, unique=True)
     email = Column(String(255), nullable=False, unique=True)
     password = Column(String, nullable=False)
     photo = Column(String(255))
     description = Column(Text)
+    is_verified = Column(BOOLEAN, default=False)
     created_at = Column(DateTime, default=datetime.datetime.now(datetime.timezone.utc))
 
 
