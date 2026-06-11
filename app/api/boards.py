@@ -229,5 +229,60 @@ def delete_user_from_board(
     }
 
 
-# TODO:
-# PATCH  /boards/{id}/transfer      — передать доску другому владельцу
+@router.patch("/{board_id}/transfer")
+def change_owner(
+    board_id: int,
+    member_data: AddMember,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """Change board's owner"""
+    # Get my and new one 's id
+    current_user_id = current_user.user_id  # my id
+    new_owner_id = member_data.user_id  # new owner's id
+
+    # Does a board exist? → 404
+    board = db.query(Board).filter(Board.board_id == board_id).first()
+    if not board:
+        raise HTTPException(status_code=404, detail="Board is not found")
+
+    # Is current user an owner? → 403
+    board_owner = (
+        db.query(BoardMembers)
+        .filter(
+            BoardMembers.board_id == board_id,
+            BoardMembers.user_id == current_user_id,
+            BoardMembers.role == "owner",
+        )
+        .first()
+    )
+    if not board_owner:
+        raise HTTPException(
+            status_code=403, detail="Current user is not an owner of the board"
+        )
+
+    # Check if new member is taking a part in the board's team → 400
+    board_member = (
+        db.query(BoardMembers)
+        .filter(
+            BoardMembers.board_id == board_id,
+            BoardMembers.user_id == new_owner_id,
+            BoardMembers.role == "member",
+        )
+        .first()
+    )
+
+    if not board_member:
+        raise HTTPException(
+            status_code=400, detail="New one is not a member of the board's team"
+        )
+
+    # Change the current user's role on the member
+    board_owner.role = "member"
+
+    # Change the role of new owner
+    board_member.role = "owner"
+
+    db.commit()
+
+    return {"message": "Role is changed"}
