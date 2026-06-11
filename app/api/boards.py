@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db.session import get_db
-from app.db.models import Board, BoardMembers
-from app.db.schemas import BoardCreate, BoardResponse
+from app.db.models import Board, BoardMembers, User
+from app.db.schemas import BoardCreate, BoardResponse, AddMember
 from app.core.security import get_current_user
 
 router = APIRouter(prefix="/boards")
@@ -86,11 +86,10 @@ def delete_board(
     # Get user_id
     user_id = current_user.user_id
 
-    # Get board using board_id
+    # Is board?
     board = db.query(Board).filter(Board.board_id == board_id).first()
     if not board:
         raise HTTPException(status_code=404, detail="Board not found")
-    # Get board_id
 
     # Is current user owner?
     member = (
@@ -114,8 +113,121 @@ def delete_board(
     return {"message": "Board deleted successfully"}
 
 
+@router.post("/{board_id}/members")
+def add_member(
+    board_id: int,
+    member_data: AddMember,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """Add member to the board"""
+    user_id = current_user.user_id
+    add_user_id = member_data.user_id
+
+    # Is board?
+    board = db.query(Board).filter(Board.board_id == board_id).first()
+    if not board:
+        raise HTTPException(status_code=404, detail="Board not found")
+
+    # Get member's role
+    member = (
+        db.query(BoardMembers)
+        .filter(BoardMembers.user_id == user_id, BoardMembers.board_id == board_id)
+        .first()
+    )
+
+    if not member:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    member_role = member.role
+    if member_role != "owner":
+        raise HTTPException(status_code=403, detail="User is not owner")
+
+    # Check user that we want to add
+    new_user = db.query(User).filter(User.user_id == add_user_id).first()
+    if not new_user:
+        raise HTTPException(status_code=404, detail="User is not founded")
+
+    # If new_user is member?
+    is_member = (
+        db.query(BoardMembers)
+        .filter(BoardMembers.board_id == board_id, BoardMembers.user_id == add_user_id)
+        .first()
+    )
+
+    if is_member:
+        raise HTTPException(status_code=400, detail="User is member yet")
+
+    user_object = BoardMembers(board_id=board_id, user_id=add_user_id, role="member")
+
+    db.add(user_object)
+
+    db.commit()
+
+    db.refresh(user_object)
+
+    return {"message": "Member added successfully"}
+
+
+@router.delete("/{board_id}/member")
+def delete_user_from_board(
+    board_id: int,
+    member_data: AddMember,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """Delete one user using it id"""
+    user_id = current_user.user_id
+
+    # Is board → 404?
+    board = db.query(Board).filter(Board.board_id == board_id).first()
+    if not board:
+        raise HTTPException(status_code=404, detail="Board is not found.")
+
+    # Check the current user is owner of the board → 403
+    # member_user_id is for deletion
+    member_user_id = member_data.user_id
+
+    is_owner = (
+        db.query(BoardMembers)
+        .filter(
+            BoardMembers.board_id == board_id,
+            BoardMembers.user_id == user_id,
+            BoardMembers.role == "owner",
+        )
+        .first()
+    )
+    if not is_owner:
+        raise HTTPException(
+            status_code=403,
+            detail="Only owner can delete members.",
+        )
+
+    # Deleted user is a member of the board → 404
+    is_member = (
+        db.query(BoardMembers)
+        .filter(
+            BoardMembers.board_id == board_id, BoardMembers.user_id == member_user_id
+        )
+        .first()
+    )
+    if not is_member:
+        raise HTTPException(status_code=404, detail="User is not a member of the board")
+
+    # If I am an owner I can't delete myself → 400
+    if is_owner.user_id == member_user_id:
+        raise HTTPException(
+            status_code=400, detail="You are an owner, deletion is forbidden."
+        )
+
+    db.delete(is_member)
+
+    db.commit()
+
+    return {
+        "message": "Member is deleted",
+    }
+
+
 # TODO:
-# DELETE /boards/{id}               — удалить доску
-# POST   /boards/{id}/members       — добавить участника
-# DELETE /boards/{id}/members/{uid} — удалить участника
 # PATCH  /boards/{id}/transfer      — передать доску другому владельцу

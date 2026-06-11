@@ -54,3 +54,10 @@ class BoardResponse(BaseModel):
     color: str
     user_id: int
     created_at: datetime
+
+
+# *** Members ***
+
+
+class AddMember(BaseModel):
+    user_id: int
