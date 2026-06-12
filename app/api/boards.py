@@ -106,6 +106,8 @@ def delete_board(
     if member_role != "owner":
         raise HTTPException(status_code=403, detail="User is not owner")
 
+    db.query(BoardMembers).filter(BoardMembers.board_id == board_id).delete()
+
     db.delete(board)
 
     db.commit()
