@@ -56,14 +56,14 @@ class BoardResponse(BaseModel):
     created_at: datetime
 
 
-# *** Members ***
+# *** MEMBERS ***
 
 
 class AddMember(BaseModel):
     user_id: int
 
 
-# *** Columns ***
+# *** COLUMNS ***
 
 
 class ColumnCreate(BaseModel):
@@ -81,3 +81,43 @@ class ColumnResponse(BaseModel):
 
 class ColumnUpdate(BaseModel):
     name: str
+
+
+# *** CARDS ***
+
+
+class CardCreate(BaseModel):
+    name: str
+    color: str = "F7F2FC"
+    task_description: str | None = None
+    priority: int | None = None
+    deadline: datetime | None = None
+    tags: str | None = None
+
+
+class CardResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    name: str
+    color: str
+    task_description: str | None = None
+    column_id: int
+    position: int
+    priority: int | None = None
+    tags: str | None = None
+    deadline: datetime | None = None
+    is_template: bool
+
+
+class CardUpdate(BaseModel):
+    name: str | None = None
+    color: str | None = None
+    task_description: str | None = None
+    priority: int | None = None
+    deadline: datetime | None = None
+    tags: str | None = None
+
+
+class CardMove(BaseModel):
+    column_id: int
+    position: int

@@ -65,7 +65,7 @@ class Cards(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(Text, nullable=True)
     color = Column(Text, default="F7F2FC")
-    tast_description = Column(Text)
+    task_description = Column(Text)
     column_id = Column(Integer, ForeignKey("columns.column_id"))
     position = Column(Integer)
     priority = Column(Integer)

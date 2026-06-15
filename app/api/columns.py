@@ -112,6 +112,8 @@ def rename_column(
 
     db.commit()
 
+    db.refresh(column)
+
     return ColumnResponse.model_validate(column)
 
 
