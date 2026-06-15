@@ -1,5 +1,4 @@
 board_data_1 = {"name": "Love", "color": "F7F2FC"}
-board_data_2 = {"name": "Lavanda", "color": "F7F2FC"}
 
 user_a = {
     "first_name": "A",
