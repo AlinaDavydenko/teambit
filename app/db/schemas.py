@@ -61,3 +61,23 @@ class BoardResponse(BaseModel):
 
 class AddMember(BaseModel):
     user_id: int
+
+
+# *** Columns ***
+
+
+class ColumnCreate(BaseModel):
+    name: str
+    position: int
+
+
+class ColumnResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    column_id: int
+    board_id: int
+    name: str
+    position: int
+
+
+class ColumnUpdate(BaseModel):
+    name: str
