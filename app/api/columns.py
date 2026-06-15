@@ -31,10 +31,11 @@ def create_column(
     if not user_is_member:
         raise HTTPException(status_code=403, detail="User is not a member of the board")
 
+    columns_count = db.query(Columns).filter(Columns.board_id == board_id).count()
+    position = columns_count + 1
+
     # Create the column with the board_id and the data from ColumnCreate
-    new_column = Columns(
-        name=column_data.name, board_id=board_id, position=column_data.position
-    )
+    new_column = Columns(name=column_data.name, board_id=board_id, position=position)
 
     db.add(new_column)
 

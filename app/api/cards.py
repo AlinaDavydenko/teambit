@@ -1,14 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db.session import get_db
-from app.db.models import Cards, Columns, Board, BoardMembers, User
+from app.db.models import Cards, Columns, BoardMembers
 from app.db.schemas import CardCreate, CardResponse, CardUpdate, CardMove
 from app.core.security import get_current_user
 
 router = APIRouter(prefix="/cards")
-
-# TODO:
-# PATCH  /cards/{card_id}/move            — переместить в другую колонку
 
 
 @router.post("/columns/{column_id}/card", response_model=CardResponse)
@@ -101,7 +98,7 @@ def get_all_cards(
     return all_sorted_cards
 
 
-@router.patch("/cards/{card_id}", response_model=CardResponse)
+@router.patch("/{card_id}", response_model=CardResponse)
 def update_card(
     card_id: int,
     card_data: CardUpdate,
@@ -143,7 +140,7 @@ def update_card(
     return CardResponse.model_validate(card)
 
 
-@router.delete("/cards/{card_id}")
+@router.delete("/{card_id}")
 def delete_card(
     card_id: int,
     db: Session = Depends(get_db),
@@ -180,7 +177,7 @@ def delete_card(
     return {"message": "The card is deleted"}
 
 
-@router.patch("/cards/{card_id}/move", response_model=CardResponse)
+@router.patch("/{card_id}/move", response_model=CardResponse)
 def card_move(
     card_id: int,
     card_data: CardMove,
@@ -228,5 +225,5 @@ def card_move(
     db.commit()
 
     db.refresh(card)
-    
+
     return CardResponse.model_validate(card)

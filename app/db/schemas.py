@@ -68,7 +68,6 @@ class AddMember(BaseModel):
 
 class ColumnCreate(BaseModel):
     name: str
-    position: int
 
 
 class ColumnResponse(BaseModel):
