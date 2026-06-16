@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db.session import get_db
-from app.db.models import Board, BoardMembers, User
+from app.db.models import Board, BoardMembers, User, Columns, Cards
 from app.db.schemas import BoardCreate, BoardResponse, AddMember
 from app.core.security import get_current_user
 
@@ -106,7 +106,18 @@ def delete_board(
     if member_role != "owner":
         raise HTTPException(status_code=403, detail="User is not owner")
 
+    # Delete all cards
+    columns = db.query(Columns).filter(Columns.board_id == board_id).all()
+    for column in columns:
+        db.query(Cards).filter(Cards.column_id == column.column_id).delete()
+
+    # Delete all columns
+    db.query(Columns).filter(Columns.board_id == board_id).delete()
+
+    # Delete all members
     db.query(BoardMembers).filter(BoardMembers.board_id == board_id).delete()
+
+    # Delete the board
 
     db.delete(board)
 

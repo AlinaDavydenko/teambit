@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db.session import get_db
-from app.db.models import Board, BoardMembers, User, Columns
+from app.db.models import Board, BoardMembers, User, Columns, Cards
 from app.db.schemas import ColumnCreate, ColumnResponse, ColumnUpdate
 from app.core.security import get_current_user
 
@@ -149,6 +149,9 @@ def delete_column(
     )
     if not my_column:
         raise HTTPException(status_code=404, detail="Column is not found on this board")
+
+    # Delete all cards in column first
+    db.query(Cards).filter(Cards.column_id == column_id).delete()
 
     db.delete(my_column)
 

@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teambit — My Boards</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #F5F0E8;
+            --surface: #FFFFFF;
+            --border: #E2DDD6;
+            --text: #1A1814;
+            --muted: #7A756E;
+            --accent: #3D5A80;
+            --accent-hover: #2E4468;
+            --danger: #C0392B;
+            --radius: 10px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            color: var(--text);
+        }
+
+        /* NAV */
+        nav {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0 32px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-logo {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text);
+            letter-spacing: -0.3px;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .nav-user {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .btn-logout {
+            padding: 7px 14px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            font-size: 13px;
+            font-family: inherit;
+            color: var(--muted);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-logout:hover {
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        /* MAIN */
+        main {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px 32px;
+        }
+
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 32px;
+        }
+
+        .page-header h2 {
+            font-size: 22px;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+        }
+
+        .btn-primary {
+            padding: 9px 18px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        /* BOARDS GRID */
+        .boards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 16px;
+        }
+
+        .board-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            cursor: pointer;
+            transition: box-shadow 0.15s, transform 0.15s;
+            position: relative;
+        }
+
+        .board-card:hover {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .board-color {
+            width: 36px;
+            height: 36px;
+            min-height: 36px;
+            border-radius: 8px;
+            margin-bottom: 14px;
+            display: block;
+            flex-shrink: 0;
+        }
+
+        .board-name {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .board-date {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .board-delete {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: transparent;
+            border-radius: 6px;
+            color: var(--muted);
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: all 0.15s;
+        }
+
+        .board-card:hover .board-delete {
+            opacity: 1;
+        }
+
+        .board-delete:hover {
+            background: #FEE2E2;
+            color: var(--danger);
+        }
+
+        /* EMPTY STATE */
+        .empty {
+            text-align: center;
+            padding: 64px 0;
+            color: var(--muted);
+        }
+
+        .empty p {
+            font-size: 15px;
+            margin-bottom: 16px;
+        }
+
+        /* MODAL */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 28px;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+        }
+
+        .modal h3 {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .modal .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+
+        .modal label {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .modal input {
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .modal input:focus {
+            border-color: var(--accent);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 8px;
+        }
+
+        .btn-cancel {
+            padding: 9px 16px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            color: var(--muted);
+            cursor: pointer;
+        }
+
+        .btn-cancel:hover {
+            border-color: var(--text);
+            color: var(--text);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav>
+        <span class="nav-logo">Teambit</span>
+        <div class="nav-right">
+            <span class="nav-user" id="nav-user"></span>
+            <button class="btn-logout" onclick="logout()">Sign out</button>
+        </div>
+    </nav>
+
+    <main>
+        <div class="page-header">
+            <h2>My boards</h2>
+            <button class="btn-primary" onclick="openModal()">+ New board</button>
+        </div>
+
+        <div id="boards-container">
+            <div class="loading">Loading boards…</div>
+        </div>
+    </main>
+
+    <!-- Create board modal -->
+    <div class="modal-overlay" id="modal">
+        <div class="modal">
+            <h3>Create a board</h3>
+            <div class="field">
+                <label for="board-name">Board name</label>
+                <input type="text" id="board-name" placeholder="e.g. Design sprint" autofocus>
+            </div>
+            <div class="field">
+                <label for="board-color">Color</label>
+                <input type="color" id="board-color" value="#F5EEDF">
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+                <button class="btn-primary" onclick="createBoard()">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API = 'http://localhost:8000';
+
+        function getToken() {
+            const token = localStorage.getItem('token');
+            if (!token) { window.location.href = '/static/index.html'; return null; }
+            return token;
+        }
+
+        function authHeaders() {
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getToken()}`
+            };
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/static/index.html';
+        }
+
+        function openModal() {
+            document.getElementById('modal').classList.add('open');
+            document.getElementById('board-name').focus();
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('open');
+            document.getElementById('board-name').value = '';
+        }
+
+        function formatDate(iso) {
+            return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+
+        function renderBoards(boards) {
+            const container = document.getElementById('boards-container');
+
+            if (boards.length === 0) {
+                container.innerHTML = `
+        <div class="empty">
+          <p>No boards yet. Create your first one!</p>
+          <button class="btn-primary" onclick="openModal()">+ New board</button>
+        </div>`;
+                return;
+            }
+
+            container.innerHTML = `<div class="boards-grid">${boards.map(b => `
+      <div class="board-card" onclick="goToBoard(${b.board_id})">
+        <div class="board-color" style="background:#${b.color}"></div>
+        <div class="board-name">${b.name}</div>
+        <div class="board-date">${formatDate(b.created_at)}</div>
+        <button class="board-delete" onclick="deleteBoard(event, ${b.board_id})" title="Delete">✕</button>
+      </div>`).join('')}
+    </div>`;
+        }
+
+        async function loadBoards() {
+            const token = getToken();
+            if (!token) return;
+
+            try {
+                const res = await fetch(`${API}/boards/`, { headers: authHeaders() });
+                if (res.status === 401) { logout(); return; }
+                const boards = await res.json();
+                renderBoards(boards);
+            } catch {
+                document.getElementById('boards-container').innerHTML =
+                    '<div class="empty"><p>Failed to load boards.</p></div>';
+            }
+        }
+
+        async function createBoard() {
+            const name = document.getElementById('board-name').value.trim();
+            if (!name) return;
+
+            const color = document.getElementById('board-color').value.replace('#', '');
+
+            try {
+                const res = await fetch(`${API}/boards/`, {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: JSON.stringify({ name, color })
+                });
+
+                if (res.ok) {
+                    closeModal();
+                    loadBoards();
+                }
+            } catch { }
+        }
+
+        async function deleteBoard(e, boardId) {
+            e.stopPropagation();
+            if (!confirm('Delete this board?')) return;
+
+            try {
+                await fetch(`${API}/boards/${boardId}`, {
+                    method: 'DELETE',
+                    headers: authHeaders()
+                });
+                loadBoards();
+            } catch { }
+        }
+
+        function goToBoard(boardId) {
+            localStorage.setItem('boardId', boardId);
+            window.location.href = '/static/board.html';
+        }
+
+        // Close modal on overlay click
+        document.getElementById('modal').addEventListener('click', function (e) {
+            if (e.target === this) closeModal();
+        });
+
+        loadBoards();
+    </script>
+</body>
+
+</html>
