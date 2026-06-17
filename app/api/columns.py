@@ -4,12 +4,13 @@ from app.db.session import get_db
 from app.db.models import Board, BoardMembers, User, Columns, Cards
 from app.db.schemas import ColumnCreate, ColumnResponse, ColumnUpdate
 from app.core.security import get_current_user
+from app.services.websocket_manager import manager
 
 router = APIRouter(prefix="/boards")
 
 
 @router.post("/{board_id}/columns", response_model=ColumnResponse)
-def create_column(
+async def create_column(
     board_id: int,
     column_data: ColumnCreate,
     db: Session = Depends(get_db),
@@ -42,6 +43,14 @@ def create_column(
     db.commit()
 
     db.refresh(new_column)
+
+    await manager.broadcast(
+        board_id,
+        {
+            "action": "column_created",
+            "column": ColumnResponse.model_validate(new_column).model_dump(),
+        },
+    )
 
     return ColumnResponse.model_validate(new_column)
 
@@ -80,7 +89,7 @@ def get_all_board_columns(
 
 
 @router.patch("/{board_id}/columns/{column_id}", response_model=ColumnResponse)
-def rename_column(
+async def rename_column(
     column_id: int,
     column_data: ColumnUpdate,
     board_id: int,
@@ -115,11 +124,19 @@ def rename_column(
 
     db.refresh(column)
 
+    await manager.broadcast(
+        board_id,
+        {
+            "action": "column_renamed",
+            "column": ColumnResponse.model_validate(column).model_dump(),
+        },
+    )
+
     return ColumnResponse.model_validate(column)
 
 
 @router.delete("/{board_id}/columns/{column_id}")
-def delete_column(
+async def delete_column(
     column_id: int,
     board_id: int,
     db: Session = Depends(get_db),
@@ -156,5 +173,10 @@ def delete_column(
     db.delete(my_column)
 
     db.commit()
+
+    await manager.broadcast(
+        board_id,
+        {"action": "column_deleted", "column_id": column_id},
+    )
 
     return {"message": "Column is deleted"}

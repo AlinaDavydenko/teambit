@@ -56,6 +56,18 @@ class BoardResponse(BaseModel):
     created_at: datetime
 
 
+class BoardMemberResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    user_id: int
+    nickname: str
+    email: EmailStr
+    role: str
+
+
+class BoardColorUpdate(BaseModel):
+    color: str
+
+
 # *** MEMBERS ***
 
 

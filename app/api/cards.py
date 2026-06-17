@@ -4,12 +4,13 @@ from app.db.session import get_db
 from app.db.models import Cards, Columns, BoardMembers
 from app.db.schemas import CardCreate, CardResponse, CardUpdate, CardMove
 from app.core.security import get_current_user
+from app.services.websocket_manager import manager
 
 router = APIRouter(prefix="/cards")
 
 
 @router.post("/columns/{column_id}/card", response_model=CardResponse)
-def create_card(
+async def create_card(
     column_id: int,
     card_data: CardCreate,
     db: Session = Depends(get_db),
@@ -59,6 +60,14 @@ def create_card(
 
     db.refresh(new_card)
 
+    await manager.broadcast(
+        board_id,
+        {
+            "action": "card_created",
+            "card": CardResponse.model_validate(new_card).model_dump(),
+        },
+    )
+
     return CardResponse.model_validate(new_card)
 
 
@@ -99,7 +108,7 @@ def get_all_cards(
 
 
 @router.patch("/{card_id}", response_model=CardResponse)
-def update_card(
+async def update_card(
     card_id: int,
     card_data: CardUpdate,
     db: Session = Depends(get_db),
@@ -137,11 +146,19 @@ def update_card(
 
     db.refresh(card)
 
+    await manager.broadcast(
+        board_id,
+        {
+            "action": "card_update",
+            "card": CardResponse.model_validate(card).model_dump(),
+        },
+    )
+
     return CardResponse.model_validate(card)
 
 
 @router.delete("/{card_id}")
-def delete_card(
+async def delete_card(
     card_id: int,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
@@ -174,11 +191,13 @@ def delete_card(
 
     db.commit()
 
+    await manager.broadcast(board_id, {"action": "card_deleted", "card_id": card_id})
+
     return {"message": "The card is deleted"}
 
 
 @router.patch("/{card_id}/move", response_model=CardResponse)
-def card_move(
+async def card_move(
     card_id: int,
     card_data: CardMove,
     db: Session = Depends(get_db),
@@ -225,5 +244,13 @@ def card_move(
     db.commit()
 
     db.refresh(card)
+
+    await manager.broadcast(
+        board_id,
+        {
+            "action": "card_moved",
+            "card": CardResponse.model_validate(card).model_dump(),
+        },
+    )
 
     return CardResponse.model_validate(card)

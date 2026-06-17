@@ -2,8 +2,15 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.db.models import Board, BoardMembers, User, Columns, Cards
-from app.db.schemas import BoardCreate, BoardResponse, AddMember
+from app.db.schemas import (
+    BoardCreate,
+    BoardResponse,
+    AddMember,
+    BoardColorUpdate,
+    BoardMemberResponse,
+)
 from app.core.security import get_current_user
+from app.services.websocket_manager import manager
 
 router = APIRouter(prefix="/boards")
 
@@ -79,7 +86,7 @@ def get_one_board(
 
 
 @router.delete("/{board_id}")
-def delete_board(
+async def delete_board(
     board_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)
 ):
     """Delete board using it id"""
@@ -123,11 +130,13 @@ def delete_board(
 
     db.commit()
 
+    await manager.broadcast(board_id, {"action": "board_deleted", "board_id": board_id})
+
     return {"message": "Board deleted successfully"}
 
 
 @router.post("/{board_id}/members")
-def add_member(
+async def add_member(
     board_id: int,
     member_data: AddMember,
     db: Session = Depends(get_db),
@@ -179,11 +188,15 @@ def add_member(
 
     db.refresh(user_object)
 
+    await manager.broadcast(
+        board_id, {"action": "member_added", "member_id": add_user_id}
+    )
+
     return {"message": "Member added successfully"}
 
 
 @router.delete("/{board_id}/member")
-def delete_user_from_board(
+async def delete_user_from_board(
     board_id: int,
     member_data: AddMember,
     db: Session = Depends(get_db),
@@ -237,13 +250,17 @@ def delete_user_from_board(
 
     db.commit()
 
+    await manager.broadcast(
+        board_id, {"action": "member_deleted", "user_id": member_user_id}
+    )
+
     return {
         "message": "Member is deleted",
     }
 
 
 @router.patch("/{board_id}/transfer")
-def change_owner(
+async def change_owner(
     board_id: int,
     member_data: AddMember,
     db: Session = Depends(get_db),
@@ -298,4 +315,67 @@ def change_owner(
 
     db.commit()
 
+    await manager.broadcast(
+        board_id, {"action": "owner_changed", "new_owner_id": new_owner_id}
+    )
+
     return {"message": "Role is changed"}
+
+
+@router.get("/{board_id}/members", response_model=list[BoardMemberResponse])
+def get_board_members(
+    board_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)
+):
+    """Get all members of a board"""
+    user_id = current_user.user_id
+
+    # Check current user is a member → 403
+    is_member = (
+        db.query(BoardMembers)
+        .filter(BoardMembers.board_id == board_id, BoardMembers.user_id == user_id)
+        .first()
+    )
+    if not is_member:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    members = (
+        db.query(User.user_id, User.nickname, User.email, BoardMembers.role)
+        .join(BoardMembers, BoardMembers.user_id == User.user_id)
+        .filter(BoardMembers.board_id == board_id)
+        .all()
+    )
+
+    return members
+
+
+@router.patch("/{board_id}/color", response_model=BoardResponse)
+async def update_board_color(
+    board_id: int,
+    color_data: BoardColorUpdate,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """Update board color"""
+    user_id = current_user.user_id
+
+    board = db.query(Board).filter(Board.board_id == board_id).first()
+    if not board:
+        raise HTTPException(status_code=404, detail="Board not found")
+
+    is_member = (
+        db.query(BoardMembers)
+        .filter(BoardMembers.board_id == board_id, BoardMembers.user_id == user_id)
+        .first()
+    )
+    if not is_member:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    board.color = color_data.color
+    db.commit()
+    db.refresh(board)
+
+    await manager.broadcast(
+        board_id, {"action": "board_color_changed", "color": board.color}
+    )
+
+    return BoardResponse.model_validate(board)
