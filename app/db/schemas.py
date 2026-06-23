@@ -132,3 +132,16 @@ class CardUpdate(BaseModel):
 class CardMove(BaseModel):
     column_id: int
     position: int
+
+
+# *** MESSAGES ***
+
+
+class MessageResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    user_id: int
+    nickname: str
+    content: str
+    is_ai: bool
+    created_at: datetime

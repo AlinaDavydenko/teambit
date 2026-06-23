@@ -1,13 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db.session import get_db
-from app.db.models import Board, BoardMembers, User, Columns, Cards
+from app.db.models import Board, BoardMembers, User, Columns, Cards, Messages
 from app.db.schemas import (
     BoardCreate,
     BoardResponse,
     AddMember,
     BoardColorUpdate,
     BoardMemberResponse,
+    MessageResponse,
 )
 from app.core.security import get_current_user
 from app.services.websocket_manager import manager
@@ -379,3 +380,43 @@ async def update_board_color(
     )
 
     return BoardResponse.model_validate(board)
+
+
+@router.get("/{board_id}/messages", response_model=list[MessageResponse])
+def get_all_messages(
+    board_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)
+):
+    """Get all messages from the ai chat"""
+    user_id = current_user.user_id
+
+    # Check current user is a member → 403
+    is_member = (
+        db.query(BoardMembers)
+        .filter(BoardMembers.board_id == board_id, BoardMembers.user_id == user_id)
+        .first()
+    )
+    if not is_member:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    # Does a board exist? → 404
+    board = db.query(Board).filter(Board.board_id == board_id).first()
+    if not board:
+        raise HTTPException(status_code=404, detail="Board is not found")
+
+    # Get all messages sorted by created_at
+    all_messages = (
+        db.query(
+            Messages.id,
+            Messages.user_id,
+            Messages.content,
+            Messages.is_ai,
+            Messages.created_at,
+            User.nickname,
+        )
+        .join(User, Messages.user_id == User.user_id)
+        .filter(Messages.board_id == board_id)
+        .order_by(Messages.created_at)
+        .all()
+    )
+
+    return all_messages

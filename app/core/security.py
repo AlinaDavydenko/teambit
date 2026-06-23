@@ -65,3 +65,12 @@ def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
         )
+
+
+def get_user_id_from_token(token: str) -> int:
+    """Decode JWT token and return user_id (for WebSocket auth)"""
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload.get("user_id")
+    except JWTError:
+        return None
