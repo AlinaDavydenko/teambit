@@ -130,7 +130,7 @@ async def delete_board(
 
     db.commit()
 
-    await manager.broadcast(board_id, {"action": "board_deleted", "board_id": board_id})
+    await manager.publish(board_id, {"action": "board_deleted", "board_id": board_id})
 
     return {"message": "Board deleted successfully"}
 
@@ -188,7 +188,7 @@ async def add_member(
 
     db.refresh(user_object)
 
-    await manager.broadcast(
+    await manager.publish(
         board_id, {"action": "member_added", "member_id": add_user_id}
     )
 
@@ -250,7 +250,7 @@ async def delete_user_from_board(
 
     db.commit()
 
-    await manager.broadcast(
+    await manager.publish(
         board_id, {"action": "member_deleted", "user_id": member_user_id}
     )
 
@@ -315,7 +315,7 @@ async def change_owner(
 
     db.commit()
 
-    await manager.broadcast(
+    await manager.publish(
         board_id, {"action": "owner_changed", "new_owner_id": new_owner_id}
     )
 
@@ -374,7 +374,7 @@ async def update_board_color(
     db.commit()
     db.refresh(board)
 
-    await manager.broadcast(
+    await manager.publish(
         board_id, {"action": "board_color_changed", "color": board.color}
     )
 

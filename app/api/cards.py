@@ -60,7 +60,7 @@ async def create_card(
 
     db.refresh(new_card)
 
-    await manager.broadcast(
+    await manager.publish(
         board_id,
         {
             "action": "card_created",
@@ -146,7 +146,7 @@ async def update_card(
 
     db.refresh(card)
 
-    await manager.broadcast(
+    await manager.publish(
         board_id,
         {
             "action": "card_update",
@@ -191,7 +191,7 @@ async def delete_card(
 
     db.commit()
 
-    await manager.broadcast(board_id, {"action": "card_deleted", "card_id": card_id})
+    await manager.publish(board_id, {"action": "card_deleted", "card_id": card_id})
 
     return {"message": "The card is deleted"}
 
@@ -245,7 +245,7 @@ async def card_move(
 
     db.refresh(card)
 
-    await manager.broadcast(
+    await manager.publish(
         board_id,
         {
             "action": "card_moved",

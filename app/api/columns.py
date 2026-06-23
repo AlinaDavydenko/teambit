@@ -44,7 +44,7 @@ async def create_column(
 
     db.refresh(new_column)
 
-    await manager.broadcast(
+    await manager.publish(
         board_id,
         {
             "action": "column_created",
@@ -124,7 +124,7 @@ async def rename_column(
 
     db.refresh(column)
 
-    await manager.broadcast(
+    await manager.publish(
         board_id,
         {
             "action": "column_renamed",
@@ -174,7 +174,7 @@ async def delete_column(
 
     db.commit()
 
-    await manager.broadcast(
+    await manager.publish(
         board_id,
         {"action": "column_deleted", "column_id": column_id},
     )
