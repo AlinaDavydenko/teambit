@@ -788,6 +788,25 @@
             white-space: nowrap;
             z-index: 10;
         }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+        }
+
+        /* FORCE LAYOUT */
+        div#board.board {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+        }
+
+        div#board.board>.column {
+            display: flex !important;
+            flex-direction: column !important;
+            flex-shrink: 0 !important;
+            width: 272px !important;
+        }
     </style>
 </head>
 
@@ -798,7 +817,7 @@
             <button class="btn-back" onclick="window.location.href='/static/dashboard.html'">← Back</button>
             <span class="nav-title" id="board-title">Board</span>
         </div>
-        <div>
+        <div class="nav-right">
             <span class="online-users" id="online-users"></span>
             <button class="btn-chat" id="chat-toggle-btn" onclick="toggleChat()">
                 <span class="chat-icon">✎</span>
