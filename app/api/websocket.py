@@ -19,7 +19,17 @@ async def websocket_endpoint(
         await websocket.close(code=1008)
         return
 
-    await manager.connect(websocket, board_id)
+    await manager.connect(websocket, board_id, user_id)
+
+    # Notify everyone that online list changed
+    await manager.publish(
+        board_id,
+        {
+            "action": "online_users_updated",
+            "user_ids": manager.get_online_users(board_id),
+        },
+    )
+
     try:
         while True:
             data = await websocket.receive_json()
@@ -58,3 +68,11 @@ async def websocket_endpoint(
 
     except WebSocketDisconnect:
         manager.disconnect(websocket, board_id)
+
+        await manager.publish(
+            board_id,
+            {
+                "action": "online_users_updated",
+                "user_ids": manager.get_online_users(board_id),
+            },
+        )

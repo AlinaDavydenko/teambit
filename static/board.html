@@ -39,8 +39,8 @@
         nav {
             background: var(--surface);
             border-bottom: 1px solid var(--border);
-            padding: 0 24px;
-            height: 52px;
+            padding: 0 28px;
+            height: 68px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -100,7 +100,7 @@
             align-items: flex-start;
             gap: 16px;
             padding: 24px;
-            min-height: calc(100vh - 52px);
+            min-height: calc(100vh - 68px);
             overflow-x: auto;
         }
 
@@ -112,7 +112,7 @@
             flex-shrink: 0;
             display: flex;
             flex-direction: column;
-            max-height: calc(100vh - 96px);
+            max-height: calc(100vh - 112px);
         }
 
         .column-header {
@@ -556,32 +556,48 @@
 
         /* CHAT */
         .btn-chat {
-            padding: 6px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px 6px 6px;
             background: transparent;
-            border: 1px solid var(--border);
-            border-radius: 7px;
-            font-size: 13px;
-            font-family: inherit;
-            color: var(--muted);
+            border: none;
             cursor: pointer;
-            transition: all 0.15s;
+            transition: opacity 0.15s;
             margin-right: 8px;
         }
 
         .btn-chat:hover {
-            border-color: var(--accent);
-            color: var(--accent);
+            opacity: 0.75;
         }
 
-        .btn-chat.has-unread {
-            border-color: var(--accent);
-            color: var(--accent);
-            font-weight: 600;
+        .chat-icon {
+            width: 32px;
+            height: 32px;
+            flex-shrink: 0;
+            border: 1.5px solid #5B9BD5;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #5B9BD5;
+            font-size: 15px;
+        }
+
+        .btn-chat.has-unread .chat-icon {
+            background: #5B9BD5;
+            color: #fff;
+        }
+
+        .chat-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text);
         }
 
         .chat-panel {
             position: fixed;
-            top: 52px;
+            top: 68px;
             right: 0;
             bottom: 0;
             width: 320px;
@@ -719,6 +735,59 @@
         .chat-send:hover {
             background: var(--accent-hover);
         }
+
+        /* ONLINE USERS */
+        .online-users {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-right: 18px;
+        }
+
+        .online-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--surface);
+            box-shadow: 0 0 0 1px var(--border);
+            position: relative;
+            cursor: default;
+        }
+
+        .online-avatar::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            right: -1px;
+            width: 8px;
+            height: 8px;
+            background: #2D9D5E;
+            border-radius: 50%;
+            border: 1.5px solid var(--surface);
+        }
+
+        .online-avatar[title]:hover::before {
+            content: attr(title);
+            position: absolute;
+            top: 38px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--text);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 500;
+            padding: 4px 8px;
+            border-radius: 5px;
+            white-space: nowrap;
+            z-index: 10;
+        }
     </style>
 </head>
 
@@ -730,7 +799,11 @@
             <span class="nav-title" id="board-title">Board</span>
         </div>
         <div>
-            <button class="btn-chat" id="chat-toggle-btn" onclick="toggleChat()">💬 Chat</button>
+            <span class="online-users" id="online-users"></span>
+            <button class="btn-chat" id="chat-toggle-btn" onclick="toggleChat()">
+                <span class="chat-icon">✎</span>
+                <span class="chat-label">Chat</span>
+            </button>
             <button class="btn-logout" onclick="logout()">Sign out</button>
         </div>
     </nav>
@@ -869,8 +942,12 @@
                     break;
                 case 'member_added':
                 case 'member_deleted':
+                    loadMembersForOnlineDisplay();
+                    break;
                 case 'owner_changed':
-                    // no UI for members yet, nothing to refresh
+                    break;
+                case 'online_users_updated':
+                    renderOnlineUsers(data.user_ids);
                     break;
                 case 'message_added':
                     appendChatMessage(data.message);
@@ -879,6 +956,32 @@
                     }
                     break;
             }
+        }
+
+        // ── ONLINE USERS ─────────────────────────────────────────────
+        let boardMembers = [];
+
+        async function loadMembersForOnlineDisplay() {
+            try {
+                const res = await fetch(`${API}/boards/${boardId}/members`, { headers: authHeaders() });
+                boardMembers = await res.json();
+            } catch {
+                boardMembers = [];
+            }
+        }
+
+        function renderOnlineUsers(userIds) {
+            const container = document.getElementById('online-users');
+            if (!userIds || userIds.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+            container.innerHTML = userIds.map(uid => {
+                const member = boardMembers.find(m => m.user_id === uid);
+                const nickname = member ? member.nickname : `User #${uid}`;
+                const initial = nickname.charAt(0).toUpperCase();
+                return `<span class="online-avatar" title="${nickname}">${initial}</span>`;
+            }).join('');
         }
 
         // ── CHAT ─────────────────────────────────────────────────────
@@ -1249,6 +1352,7 @@
         loadBoard();
         connectWebSocket();
         loadChatHistory();
+        loadMembersForOnlineDisplay();
         currentUserId = getCurrentUserId();
     </script>
 </body>
