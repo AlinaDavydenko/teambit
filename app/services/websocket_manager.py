@@ -1,4 +1,7 @@
 from fastapi import WebSocket
+import json
+from app.core.redis_client import redis_client
+import asyncio
 
 
 class ConnectionManager:
@@ -11,6 +14,7 @@ class ConnectionManager:
         await websocket.accept()
         if board_id not in self.active_connections:
             self.active_connections[board_id] = []
+            asyncio.create_task(self.listen_to_board(board_id))
         self.active_connections[board_id].append(websocket)
 
     def disconnect(self, websocket: WebSocket, board_id: int):
@@ -22,6 +26,22 @@ class ConnectionManager:
         if board_id in self.active_connections:
             for connection in self.active_connections[board_id]:
                 await connection.send_json(message)
+
+    async def publish(self, board_id: int, message: dict):
+        """Publish a message to Redis channel for this board"""
+        channel = f"board:{board_id}"
+        await redis_client.publish(channel, json.dumps(message))
+
+    async def listen_to_board(self, board_id: int):
+        """Listen to Redis channel and broadcast to local connections"""
+        channel = f"board:{board_id}"
+        pubsub = redis_client.pubsub()
+        await pubsub.subscribe(channel)
+
+        async for message in pubsub.listen():
+            if message["type"] == "message":
+                data = json.loads(message["data"])
+                await self.broadcast(board_id, data)
 
 
 manager = ConnectionManager()
