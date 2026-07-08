@@ -64,7 +64,7 @@ async def create_card(
         board_id,
         {
             "action": "card_created",
-            "card": CardResponse.model_validate(new_card).model_dump(),
+            "card": CardResponse.model_validate(new_card).model_dump(mode='json'),
         },
     )
 
@@ -150,7 +150,7 @@ async def update_card(
         board_id,
         {
             "action": "card_update",
-            "card": CardResponse.model_validate(card).model_dump(),
+            "card": CardResponse.model_validate(card).model_dump(mode='json'),
         },
     )
 
@@ -249,7 +249,7 @@ async def card_move(
         board_id,
         {
             "action": "card_moved",
-            "card": CardResponse.model_validate(card).model_dump(),
+            "card": CardResponse.model_validate(card).model_dump(mode='json'),
         },
     )
 

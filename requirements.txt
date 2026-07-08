@@ -17,3 +17,6 @@ httpx
 aiofiles
 websockets
 redis
+anyio[trio]
+pytest-anyio
+openai

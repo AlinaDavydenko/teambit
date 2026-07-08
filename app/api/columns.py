@@ -48,7 +48,7 @@ async def create_column(
         board_id,
         {
             "action": "column_created",
-            "column": ColumnResponse.model_validate(new_column).model_dump(),
+            "column": ColumnResponse.model_validate(new_column).model_dump(mode="json"),
         },
     )
 
@@ -128,7 +128,7 @@ async def rename_column(
         board_id,
         {
             "action": "column_renamed",
-            "column": ColumnResponse.model_validate(column).model_dump(),
+            "column": ColumnResponse.model_validate(column).model_dump(mode="json"),
         },
     )
 
