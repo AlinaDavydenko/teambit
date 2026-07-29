@@ -24,7 +24,13 @@ A real-time collaborative project management application built with FastAPI. Tea
 - **REST API** — fully documented via Swagger UI at `/docs`
 
 ---
+## Screenshots
 
+![Dashboard](screenshots/dashboard.png)
+![Board](screenshots/board.png)
+![Chat](screenshots/chat.png)
+
+---
 ## Tech Stack
 
 | Layer | Technology |
