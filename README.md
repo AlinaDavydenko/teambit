@@ -26,9 +26,9 @@ A real-time collaborative project management application built with FastAPI. Tea
 ---
 ## Screenshots
 
-![Dashboard](screenshots/dashboard.png)
-![Board](screenshots/board.png)
-![Chat](screenshots/chat.png)
+![Dashboard](static/screenshots/dashboard.png)
+![Board](static/screenshots/board.png)
+![Chat](static/screenshots/chat.png)
 
 ---
 ## Tech Stack
